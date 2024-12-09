@@ -20,23 +20,29 @@ def main():
     logger.success(f"Loaded {total_keys} wallet(s) \n")
 
     for index, key in enumerate(keys, start=1):
-        label = f"[{index}/{total_keys}]"
-        proxy = random.choice(proxies)
+        try:
+            label = f"[{index}/{total_keys}]"
+            proxy = random.choice(proxies)
 
-        client = Intract(key, proxy, label)
+            client = Intract(key, proxy, label)
 
-        if not settings.ALLOW_MULTIPLE_MINTS:
-            balance = client.get_balance()
-            if balance > 1:
-                logger.warning(f"{label} this wallet already minted {balance} nft(s)")
-                continue
+            if not settings.ALLOW_MULTIPLE_MINTS:
+                balance = client.get_balance()
+                if balance > 1:
+                    logger.warning(
+                        f"{label} this wallet already minted {balance} nft(s)"
+                    )
+                    continue
 
-        if client.auth():
-            claim_data = client.get_claim_data()
-            status = client.mint(claim_data)
+            if client.auth():
+                claim_data = client.get_claim_data()
+                status = client.mint(claim_data)
 
-            if status and index < total_keys:
-                sleep(*settings.SLEEP_BETWEEN_WALLETS)
+                if status and index < total_keys:
+                    sleep(*settings.SLEEP_BETWEEN_WALLETS)
+
+        except Exception as error:
+            logger.error(f"{label} Error processing wallet: {error} \n")
 
 
 if __name__ == "__main__":

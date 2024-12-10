@@ -30,7 +30,7 @@ CHAIN_DATA = {
         "chain_id": 8453,
     },
     "0g": {
-        "rpc": "https://16600.rpc.thirdweb.com",
+        "rpc": "https://evmrpc-testnet.0g.ai",
         "explorer": "https://chainscan-newton.0g.ai",
         "token": "A0GI",
         "chain_id": 16600,

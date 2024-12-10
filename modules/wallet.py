@@ -1,8 +1,12 @@
 import random
+import secrets
 import time
 
+import requests
 from eth_account import Account
-from web3 import Web3
+from requests.adapters import HTTPAdapter, Retry
+from web3 import HTTPProvider, Web3
+from web3.exceptions import TransactionNotFound
 from web3.middleware import geth_poa_middleware
 
 import settings as SETTINGS
@@ -14,15 +18,33 @@ class Wallet:
         self.private_key = private_key
         self.account = Account.from_key(private_key)
         self.address = self.account.address
-
+        self.session = self.get_session()
         self.chain = chain
-        self.web3 = Web3(Web3.HTTPProvider(CHAIN_DATA[chain]["rpc"]))
+        self.web3 = Web3(
+            HTTPProvider(
+                CHAIN_DATA[chain]["rpc"],
+                session=self.session,
+                request_kwargs={"timeout": 180},
+            )
+        )
         self.explorer = CHAIN_DATA[chain]["explorer"]
-
         self.counter = counter
-        self.label = f"{self.counter} {self.address} | "
+        self.label = f"{self.counter} {self.address} |"
 
         self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+
+    def get_session(self):
+        retries = Retry(
+            total=5,
+            backoff_factor=0.2,
+            status_forcelist=[429, 500, 502, 503, 504],
+        )
+        adapter = HTTPAdapter(pool_connections=20, pool_maxsize=20, max_retries=retries)
+        session = requests.Session()
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+
+        return session
 
     def __str__(self):
         return f"Wallet(address={self.address})"
@@ -55,15 +77,55 @@ class Wallet:
 
         return balance, decimals, symbol
 
-    def get_tx_data(self, value=0, **kwargs):
-        return {
+    def get_tx_data(self, value=0, eip1559=True, **kwargs):
+        tx_data = {
             "chainId": self.web3.eth.chain_id,
             "from": self.address,
             "nonce": self.web3.eth.get_transaction_count(self.address),
             "value": value,
-            # "gasPrice": self.web3.eth.gas_price,
             **kwargs,
         }
+
+        if eip1559 == False:
+            tx_data["gasPrice"] = self.web3.eth.gas_price
+
+        if self.chain == "0g":
+            tx_data["gasPrice"] = tx_data["gasPrice"] * 2
+
+        return tx_data
+
+    def await_tx(self, tx_hash, timeout=180):
+        receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash, timeout=timeout)
+
+        total_time = 0
+        poll_latency = 20
+
+        while True:
+            try:
+                receipt = self.web3.eth.wait_for_transaction_receipt(
+                    tx_hash, timeout=timeout
+                )
+
+                if receipt.status == 1:
+                    logger.success(f"{self.label} Tx confirmed \n")
+                    return True
+                elif receipt.status is None:
+                    logger.warning(f"{self.label} Waiting for tx confirmation...")
+                    time.sleep(poll_latency)
+                else:
+                    logger.error(f"{self.label} Transaction failed")
+                    return False
+
+            except TransactionNotFound:
+                if total_time > timeout:
+                    logger.error(
+                        f"{self.label} Transaction is not in the chain after {timeout} seconds"
+                    )
+                    return False
+
+                logger.warning(f"{self.label} Waiting for tx confirmation...")
+                total_time += poll_latency
+                time.sleep(poll_latency)
 
     def send_tx(self, tx, tx_label="", retry=0, increment=1.1):
         try:
@@ -76,17 +138,7 @@ class Wallet:
             tx_hash = self.web3.eth.send_raw_transaction(signed_tx.rawTransaction)
             logger.info(f"{tx_label} | {self.explorer}/tx/{tx_hash.hex()}")
 
-            tx_receipt = self.web3.eth.wait_for_transaction_receipt(
-                tx_hash, timeout=400
-            )
-
-            attempts = f"after {retry + 1} attempts" if retry > 0 else ""
-
-            if tx_receipt.status == 1:
-                logger.success(f"{tx_label} | Tx confirmed {attempts} \n")
-                return tx_receipt.status
-            else:
-                raise Exception(f"{tx_label} | Tx Failed \n")
+            return self.await_tx(tx_hash)
 
         except Exception as error:
             logger.error(error)
@@ -121,3 +173,22 @@ class Wallet:
         status = self.send_tx(tx, tx_label)
         time.sleep(random.uniform(7, 20))
         return status
+
+    def send_native_token_to_a_rand_wallet(self, amount_range):
+        balance = self.get_balance()
+
+        if balance == 0:
+            logger.warning(f"{self.label} This wallet has no balance, skipping \n")
+            return
+
+        private_key = "0x" + secrets.token_hex(32)
+        recipient = Account.from_key(private_key).address
+
+        transfer_percentage = random.randint(*amount_range)
+        transfer_amount = int(balance * (transfer_percentage / 100))
+
+        tx = self.get_tx_data(
+            eip1559=False, to=recipient, value=transfer_amount, gas=21000
+        )
+
+        return self.send_tx(tx, increment=2, tx_label=f"{self.label} Send A0GI")

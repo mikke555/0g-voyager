@@ -7,13 +7,14 @@ from tls_client import Session
 
 import settings as SETTINGS
 from modules.config import VOYAGER_0G, VOYAGER_0G_ABI, logger
+from modules.utils import check_gas
 from modules.wallet import Wallet
 
 
 class Intract(Wallet):
     def __init__(self, private_key, proxy, label):
         super().__init__(private_key, label)
-        self.label += "Intract |"
+        self.label += " Intract |"
         self.session = self.get_new_session(proxy)
         self.contract = self.get_contract(VOYAGER_0G, VOYAGER_0G_ABI)
 
@@ -90,6 +91,7 @@ class Intract(Wallet):
         balance = self.contract.functions.balanceOf(self.address).call()
         return balance
 
+    @check_gas
     def mint(self, claim_data):
         """Function: mintWithSignature((address,address,uint256,address,string,uint256,address,uint128,uint128,bytes32), bytes)"""
 

@@ -2,6 +2,7 @@ import json
 from sys import stderr
 
 from loguru import logger
+from web3 import Web3
 
 logger.remove()
 logger.add(
@@ -28,7 +29,15 @@ CHAIN_DATA = {
         "token": "ETH",
         "chain_id": 8453,
     },
+    "0g": {
+        "rpc": "https://16600.rpc.thirdweb.com",
+        "explorer": "https://chainscan-newton.0g.ai",
+        "token": "A0GI",
+        "chain_id": 16600,
+    },
 }
+
+mainnet_client = Web3(Web3.HTTPProvider(CHAIN_DATA["ethereum"]["rpc"]))
 
 VOYAGER_0G = "0xF64B5E5D0aD587E2B8c796Cc07b108DD2f6C2288"
 

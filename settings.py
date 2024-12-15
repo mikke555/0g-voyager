@@ -5,7 +5,7 @@
 SHUFFLE_WALLETS = True
 USE_PROXY = True
 
-SLEEP_BETWEEN_WALLETS = [10, 20]
+SLEEP_BETWEEN_WALLETS = [100, 200]
 SLEEP_BETWEEN_ACTIONS = [5, 10]
 RETRY_COUNT = 1
 
@@ -16,6 +16,7 @@ MAX_GWEI = 30
 #######################################################################
 
 ALLOW_MULTIPLE_MINTS = False
+USE_REF = False
 REF_CODE = "BQUtTJ"
 
 #######################################################################

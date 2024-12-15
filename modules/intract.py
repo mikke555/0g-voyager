@@ -138,7 +138,7 @@ class Intract(Wallet):
 
         return self.send_tx(
             contract_tx,
-            tx_label=f"{self.label} mint {name}",
+            tx_label=f"{self.label} Mint {name}",
         )
 
     def get_user_id(self) -> str:
@@ -195,11 +195,16 @@ class Intract(Wallet):
             "sessionId": random.randint(100000000, 999999999),
             "lastInternalUrl": "DIRECT",
             "isTelegramMiniApp": "false",
-            # optional params
-            "referralCode": settings.REF_CODE,
-            "referralSource": "QUEST_PAGE",
-            "referralLink": "https://quest.intract.io/quest/6715da4fc0c9e039a626fbe8?campaign_initiator_type=explore&card_position=0",
         }
+
+        if settings.USE_REF:
+            payload.update(
+                {
+                    "referralCode": settings.REF_CODE,
+                    "referralSource": "QUEST_PAGE",
+                    "referralLink": "https://quest.intract.io/quest/6715da4fc0c9e039a626fbe8?campaign_initiator_type=explore&card_position=0",
+                }
+            )
 
         resp = self.session.get(url, params=payload)
         data = resp.json()

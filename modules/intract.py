@@ -90,6 +90,10 @@ class Intract(Wallet):
         response = self.session.get(url, params=params)
         data = response.json()
 
+        if data.get("message") == "SuperUser not logged in":
+            logger.error(f"{self.label} UNAUTHORIZED \n")
+            return False
+
         return data["claimData"]["functionParams"]
 
     def get_nft_balance(self):

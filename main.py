@@ -41,18 +41,20 @@ def main():
                 proxy = random.choice(proxies) if settings.USE_PROXY else None
                 client = Intract(key, proxy, label)
 
+                if not client.auth():
+                    return
+
                 balance = client.get_nft_balance()
 
                 if settings.ALLOW_MULTIPLE_MINTS or balance < 1:
                     claim_data = client.get_claim_data()
-                    client.mint(claim_data)
+
+                    if claim_data:
+                        client.mint(claim_data)
                 else:
                     logger.warning(
                         f"{label} This wallet already minted {balance} nft(s)"
                     )
-
-                if not client.auth():
-                    return
 
                 if not client.get_user_id():
                     return
@@ -80,8 +82,8 @@ def main():
                     settings.SEND_VALUE_PERCENTAGE
                 )
 
-            if status and index < total_keys:
-                sleep(*settings.SLEEP_BETWEEN_WALLETS)
+                if status and index < total_keys:
+                    sleep(*settings.SLEEP_BETWEEN_WALLETS)
 
         except Exception as error:
             logger.error(f"{label} Error processing wallet: {error} \n")

@@ -7,14 +7,30 @@ pip install -r requirements.txt
 
 ## ⚙️ Settings
 
-* `SHUFFLE_WALLETS`
-* `USE_PROXY`
-* `ALLOW_MULTIPLE_MINTS` 
+```env
+#######################################################################
+#                        General Settings                             #
+#######################################################################
 
-* `SLEEP_BETWEEN_WALLETS`
-* `SLEEP_BETWEEN_ACTIONS`
-* `RETRY_COUNT` 
+SHUFFLE_WALLETS = True
+USE_PROXY = True
 
-* `SEND_VALUE_PERCENTAGE` 
+SLEEP_BETWEEN_WALLETS = [10, 20]
+SLEEP_BETWEEN_ACTIONS = [5, 10]
+RETRY_COUNT = 1
 
-* `MAX_GWEI` 
+MAX_GWEI = 30
+
+#######################################################################
+#                        Intract Settings                             #
+#######################################################################
+
+ALLOW_MULTIPLE_MINTS = False
+REF_CODE = "BQUtTJ"
+
+#######################################################################
+#                        Send A0GI Settings                           #
+#######################################################################
+
+SEND_VALUE_PERCENTAGE = [5, 10]
+```

@@ -41,6 +41,17 @@ mainnet_client = Web3(Web3.HTTPProvider(CHAIN_DATA["ethereum"]["rpc"]))
 
 VOYAGER_0G = "0xF64B5E5D0aD587E2B8c796Cc07b108DD2f6C2288"
 
+tasks = [
+    {"name": "Follow 0G on Twitter", "id": "6715da4fc0c9e039a626fbea"},
+    {"name": "Learn more about 0G dAIOS", "id": "6715db33c0c9e039a626fd12"},
+    {
+        "name": "Mint and verify that you hold 0G Voyager NFT",
+        "id": "67162a6fc0c9e039a629d39d",
+    },
+    {"name": "Retweet the campaign announcement", "id": "6715db33c0c9e039a626fd13"},
+    {"name": "Check out the TonTon miniapp", "id": "6715db33c0c9e039a626fd14"},
+]
+
 with open("data/abi/erc20.json") as f:
     ERC20_ABI = json.load(f)
 

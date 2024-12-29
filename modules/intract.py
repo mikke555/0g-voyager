@@ -183,7 +183,7 @@ class Intract(Wallet):
 
     def fetch_journey(self):
         url = "https://gcp-api.intract.io/api/qv1/journey/fetch"
-        payload = {
+        params = {
             "campaignId": self.campaign_id,
             "channelCode": "DEFAULT",
             "userRef": "null",
@@ -198,7 +198,7 @@ class Intract(Wallet):
         }
 
         if settings.USE_REF:
-            payload.update(
+            params.update(
                 {
                     "referralCode": settings.REF_CODE,
                     "referralSource": "QUEST_PAGE",
@@ -206,7 +206,7 @@ class Intract(Wallet):
                 }
             )
 
-        resp = self.session.get(url, params=payload)
+        resp = self.session.get(url, params=params)
         data = resp.json()
 
         if data.get("isActive") != True:

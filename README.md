@@ -27,7 +27,7 @@ MAX_GWEI = 30
 
 ALLOW_MULTIPLE_MINTS = False
 USE_REF = False
-REF_CODE = "BQUtTJ"
+REF_CODE = ""
 
 #######################################################################
 #                        Send A0GI Settings                           #

@@ -1,3 +1,5 @@
+import csv
+import os
 import random
 import time
 from datetime import datetime
@@ -50,3 +52,19 @@ def check_gas(func):
         return func(*args, **kwargs)
 
     return wrapper
+
+
+def write_to_csv(path, headers, data):
+    directory = os.path.dirname(path)
+
+    if directory:
+        if not os.path.exists(directory):
+            os.makedirs(directory, exist_ok=True)
+
+    with open(path, mode="a", newline="") as file:
+        writer = csv.writer(file)
+
+        if file.tell() == 0:
+            writer.writerow(headers)
+
+        writer.writerow(data)

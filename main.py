@@ -1,12 +1,41 @@
 import random
 
 import questionary
+from questionary import Choice
 
 import settings
-from modules.config import logger, tasks
+from modules.config import VOYAGER_0G, logger, tasks
 from modules.intract import Intract
-from modules.utils import random_sleep, sleep
+from modules.utils import random_sleep, sleep, write_to_csv
 from modules.wallet import Wallet
+
+
+def get_action() -> str:
+    choices = [
+        Choice("Ming 0g Voyager NFT and claim tasks on Intract", "mint"),
+        Choice("Check NFT balance", "check_balance"),
+        Choice("Send A0GI token to a random wallet", "send_token"),
+        Choice("Quit", "quit"),
+    ]
+
+    custom_style = questionary.Style(
+        [
+            ("qmark", "fg:#47A6F9 bold"),
+            ("pointer", "fg:#47A6F9 bold"),
+            ("selected", "fg:#47A6F9"),
+            ("highlighted", "fg:#808080"),
+            ("answer", "fg:#808080 bold"),
+            ("instruction", "fg:#8c8c8c italic"),
+        ]
+    )
+
+    action = questionary.select(
+        "Select action",
+        choices=choices,
+        style=custom_style,
+    ).ask()
+
+    return action
 
 
 def main():
@@ -23,13 +52,7 @@ def main():
     if settings.SHUFFLE_WALLETS:
         random.shuffle(keys)
 
-    action = questionary.select(
-        "Select action",
-        choices=[
-            "Ming 0g Voyager NFT and claim tasks on Intract",
-            "Send A0GI token to a random wallet",
-        ],
-    ).ask()
+    action = get_action()
 
     for index, key in enumerate(keys, start=1):
         total_keys = len(keys)
@@ -37,7 +60,7 @@ def main():
         status = None
 
         try:
-            if action == "Ming 0g Voyager NFT and claim tasks on Intract":
+            if action == "mint":
                 proxy = random.choice(proxies) if settings.USE_PROXY else None
                 client = Intract(key, proxy, label)
 
@@ -76,14 +99,28 @@ def main():
                 client.fetch_journey()
                 sleep(*settings.SLEEP_BETWEEN_WALLETS)
 
-            elif action == "Send A0GI token to a random wallet":
-                wallet = Wallet(key, label, chain="0g")
-                status = wallet.send_native_token_to_a_rand_wallet(
+            if action == "check_balance":
+                client = Wallet(key, label, chain="base")
+                balance = client.get_balance(VOYAGER_0G)
+
+                logger.debug(f"{client.label} {balance}")
+                write_to_csv(
+                    path=f"balance.csv",
+                    headers=["address", "balance"],
+                    data=[client.address, balance],
+                )
+
+            if action == "send_token":
+                client = Wallet(key, label, chain="0g")
+                status = client.send_native_token_to_a_rand_wallet(
                     settings.SEND_VALUE_PERCENTAGE
                 )
 
                 if status and index < total_keys:
                     sleep(*settings.SLEEP_BETWEEN_WALLETS)
+
+            if action == "quit":
+                quit()
 
         except Exception as error:
             logger.error(f"{label} Error processing wallet: {error} \n")
